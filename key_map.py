@@ -6,6 +6,18 @@ from tkinter import filedialog
 from threading import Thread
 from PyQt5.QtWidgets import QApplication, QFileDialog
 
+def auto_connect_wsa():
+    """Automatically connect to WSA and verify connection."""
+    print("Connecting to WSA (127.0.0.1:58526)...")
+    os.system("adb connect 127.0.0.1:58526")
+
+    # Check if device is listed
+    result = os.popen("adb devices").read()
+    if "127.0.0.1:58526" in result and "device" in result:
+        print("✅ ADB successfully connected to WSA.")
+    else:
+        print("❌ ADB failed to connect to WSA. Is WSA running?")
+
 # Default path for configuration files
 CONFIG_DIR = "configs"
 os.makedirs(CONFIG_DIR, exist_ok=True)  # Ensure the directory exists
@@ -438,6 +450,23 @@ def remove_key(key):
     else:
         print(f"Key {key} not found.")
 
+def check_adb_connection():
+    """Check if ADB is connected to WSA and update the label."""
+    global adb_status_label
+
+    try:
+        result = os.popen("adb devices").read()
+        if "127.0.0.1:58526" in result and "device" in result:
+            adb_status_label.config(text="✅ ADB Connected to WSA", fg="green")
+        else:
+            adb_status_label.config(text="❌ ADB Not Connected", fg="red")
+    except Exception as e:
+        adb_status_label.config(text=f"❌ ADB Check Failed: {e}", fg="red")
+
+    # Schedule to check again in 5 seconds
+    adb_status_label.after(5000, check_adb_connection)
+
+
 def create_controller():
     """Create an on-screen game controller with adjustable coordinates."""
     root = tk.Tk()
@@ -445,6 +474,12 @@ def create_controller():
     root.geometry("400x400")
     root.minsize(400, 400)  # Set a minimum size for the window
 
+    global adb_status_label
+    adb_status_label = tk.Label(root, text="Checking ADB connection...", fg="orange", font=("Arial", 10, "bold"))
+    adb_status_label.pack(pady=5)
+
+    # ✅ Call this AFTER the label is defined
+    check_adb_connection()
     global key_frame  # Declare key_frame as global so it can be accessed in update_key_buttons
 
     # Input field and button to add new keys
@@ -526,13 +561,19 @@ def create_controller():
     control_frame.pack(fill="x", padx=10, pady=5)
     tk.Button(control_frame, text="Save Config", command=save_config).pack(side="left", padx=5)
     tk.Button(control_frame, text="Load Config", command=load_config).pack(side="left", padx=5)
-
+    
+    # ✅ Reconnect button (place this AFTER control_frame is created)
+    tk.Button(control_frame, text="Reconnect ADB", command=auto_connect_wsa).pack(side="left", padx=5)
+   
     # Load the initial key buttons
     load_default_config()  # Load the default configuration
     update_key_buttons()
 
     # Run the tkinter main loop
     root.mainloop()
+
+# Automatically connect to WSA
+auto_connect_wsa()
 
 # Start the keyboard listener in a separate thread
 listener_thread = Thread(target=lambda: keyboard.Listener(on_press=on_press, on_release=on_release).start())
@@ -542,6 +583,9 @@ listener_thread.start()
 # Start the mouse listener in a separate thread
 mouse_listener = mouse.Listener(on_click=on_mouse_click)
 mouse_listener.start()
+
+# Start checking ADB connection
+#check_adb_connection()
 
 # Launch the on-screen controller
 create_controller()
