@@ -1,62 +1,97 @@
 from pynput import mouse, keyboard
 from threading import Thread
 import gui_helpers
-from tkinter import ttk, messagebox
-from adb_actions import simulate_touch  # Make sure this import is correct
-
+from adb_actions import simulate_touch, simulate_scroll, simulate_long_press, simulate_multiple_taps, simulate_continuous_press
+from windows_actions import simulate_windows_click, simulate_windows_scroll, simulate_windows_long_press, simulate_windows_multiple_taps, simulate_windows_continuous_press, stop_windows_continuous_press
+from gui_helpers import key_to_touch
 
 def on_press(key):
     try:
-        if hasattr(key, 'char') and key.char in gui_helpers.key_to_touch:
-            action = gui_helpers.key_to_touch[key.char]
-        elif hasattr(key, 'name') and key.name in gui_helpers.key_to_touch:
-            action = gui_helpers.key_to_touch[key.name]
-        else:
-            return  # Exit early if not found
+        from gui import selected_platform
+        key_str = getattr(key, 'char', None) or getattr(key, 'name', None)
+        if not key_str or key_str not in gui_helpers.key_to_touch:
+            return
 
-       # print(f"🔑 Pressed {key}, executing action: {action}")  # ✅ Now it's safe
+        action = gui_helpers.key_to_touch[key_str]
+        print(f"🔑 Pressed '{key_str}', executing action: {action}")
 
         if isinstance(action, tuple) and len(action) == 2:
-            from adb_actions import simulate_touch
-            simulate_touch(*action)
+            if selected_platform.get() == "ADB":
+                simulate_touch(*action)
+            else:
+                simulate_windows_click(*action)
 
         elif isinstance(action, dict):
-            from adb_actions import simulate_scroll, simulate_long_press, simulate_multiple_taps
-
             action_type = action.get("type")
-            if action_type == "scroll" or action_type == "swipe":
-                simulate_scroll(
-                    action.get("start_x", 0),
-                    action.get("start_y", 0),
-                    action.get("end_x", 0),
-                    action.get("end_y", 0),
-                    action.get("duration", 300),
-                )
-            elif action_type == "long_press":
-                simulate_long_press(
-                    action.get("x", 0),
-                    action.get("y", 0),
-                    action.get("duration", 1000),
-                )
-            elif action_type == "multiple_taps":
-                simulate_multiple_taps(
-                    action.get("x", 0),
-                    action.get("y", 0),
-                    action.get("count", 2)
-                )
-
+            if selected_platform.get() == "ADB":
+                if action_type in ["scroll", "swipe"]:
+                    simulate_scroll(
+                        action.get("start_x", 0), action.get("start_y", 0),
+                        action.get("end_x", 0), action.get("end_y", 0),
+                        action.get("duration", 300)
+                    )
+                elif action_type == "long_press":
+                    simulate_long_press(
+                        action.get("x", 0), action.get("y", 0),
+                        action.get("duration", 1000)
+                    )
+                elif action_type == "multiple_taps":
+                    simulate_multiple_taps(
+                        action.get("x", 0), action.get("y", 0),
+                        action.get("count", 2)
+                    )
+                elif action_type == "continuous_press":
+                    simulate_continuous_press(
+                        action.get("x", 0), action.get("y", 0),
+                        key_str
+                    )
+            else:
+                if action_type in ["scroll", "swipe"]:
+                    simulate_windows_scroll(
+                        action.get("start_x", 0), action.get("start_y", 0),
+                        action.get("end_x", 0), action.get("end_y", 0),
+                        action.get("duration", 300)
+                    )
+                elif action_type == "long_press":
+                    simulate_windows_long_press(
+                        action.get("x", 0), action.get("y", 0),
+                        action.get("duration", 1000)
+                    )
+                elif action_type == "multiple_taps":
+                    simulate_windows_multiple_taps(
+                        action.get("x", 0), action.get("y", 0),
+                        action.get("count", 2)
+                    )
+                elif action_type == "continuous_press":
+                    simulate_windows_continuous_press(
+                        action.get("x", 0), action.get("y", 0),
+                        key_str
+                    )
     except Exception as e:
-        messagebox.showerror(f"❌ Error in on_press: {e}")
+        print(f"❌ Error in on_press: {e}")
 
 def on_release(key):
-    if key == keyboard.Key.esc:
-        return False
+    try:
+        from gui import selected_platform
+        key_str = getattr(key, 'char', None) or getattr(key, 'name', None)
 
+        if selected_platform.get() == "ADB":
+            from adb_actions import stop_continuous_press
+            if key_str:
+                stop_continuous_press(key_str)
+        else:
+            if key_str:
+                stop_windows_continuous_press(key_str)
+
+        if key == keyboard.Key.esc:
+            return False
+    except Exception as e:
+        print(f"❌ Error in on_release: {e}")
 
 def on_mouse_click(x, y, button, pressed):
     if pressed and gui_helpers.current_key:
         gui_helpers.key_to_touch[gui_helpers.current_key] = (x, y)
-        #print(f"✅ Set coordinates for {gui_helpers.current_key}: ({x}, {y})")
+        print(f"✅ Set coordinates for {gui_helpers.current_key}: ({x}, {y})")
         gui_helpers.current_key = None
         gui_helpers.update_key_buttons()
 

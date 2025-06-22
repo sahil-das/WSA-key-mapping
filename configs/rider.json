@@ -1,0 +1,22 @@
+{
+  "a": {
+    "type": "continuous_click",
+    "x": 1736,
+    "y": 581
+  },
+  "left": {
+    "type": "continuous_click",
+    "x": 1202,
+    "y": 595
+  },
+  "right": {
+    "type": "continuous_click",
+    "x": 1291,
+    "y": 585
+  },
+  "down": {
+    "type": "continuous_click",
+    "x": 1754,
+    "y": 581
+  }
+}

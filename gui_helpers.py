@@ -1,194 +1,19 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox, Toplevel
 from pynput import mouse
-# gui_helpers.py
-from adb_actions import simulate_scroll, simulate_touch, simulate_long_press, simulate_multiple_taps
-
 
 key_to_touch = {}
 current_key = None
+conditional_mappings = {}
 
 def remove_key(key):
     if key in key_to_touch:
         del key_to_touch[key]
-        #print(f"❌ Removed key: {key}")
-        update_key_buttons()  # Update UI after key is removed
-    else:
-       messagebox.showerror(f"⚠️ Key '{key}' not found.")
-
-
-# Ensure the frame is set before updating
-def update_key_buttons():
-    if not hasattr(update_key_buttons, "frame"):
-        #print("⚠️ update_key_buttons.frame not set. GUI can't be updated yet.")
-        return
-
-    frame = update_key_buttons.frame
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-    frame.columnconfigure(0, weight=1)
-    frame.rowconfigure(0, weight=1)
-
-    canvas = tk.Canvas(frame)
-    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-    canvas.grid(row=0, column=0, sticky="nsew")
-    scrollbar.grid(row=0, column=1, sticky="ns")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    scrollable_frame = ttk.Frame(canvas)
-    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-    canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas_window, width=e.width))
-
-    def _on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    scrollable_frame.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
-    scrollable_frame.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
-
-    scrollable_frame.columnconfigure(0, weight=1)
-
-    for idx, (key, action) in enumerate(key_to_touch.items()):
-        row_frame = ttk.Frame(scrollable_frame)
-        row_frame.grid(row=idx, column=0, sticky="ew", padx=5, pady=5)
-        row_frame.columnconfigure(0, weight=3)
-        row_frame.columnconfigure(1, weight=1)
-        row_frame.columnconfigure(2, weight=1)
-        row_frame.columnconfigure(3, weight=1)
-
-        ttk.Label(row_frame, text=f"{key.upper()}: {action}", wraplength=600, anchor="w", justify="left")\
-            .grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        ttk.Button(row_frame, text="Set", command=lambda k=key: set_coordinates(k))\
-            .grid(row=0, column=1, padx=2, sticky="ew")
-        ttk.Button(row_frame, text="Edit", command=lambda k=key: edit_key_action(k))\
-            .grid(row=0, column=2, padx=2, sticky="ew")
-        ttk.Button(row_frame, text="Remove", command=lambda k=key: remove_key(k))\
-            .grid(row=0, column=3, padx=2, sticky="ew")
-        
-def remove_key(key):
-    if key in key_to_touch:
-        del key_to_touch[key]
-        #print(f"❌ Removed key: {key}")
-        # Check if the frame is set before updating the buttons
-        #if hasattr(update_key_buttons, "frame"):
-         #   update_key_buttons()
-       # else:
-          #  print("⚠️ Can't update buttons, frame not set.")
-    else:
-        print(f"⚠️ Key '{key}' not found.")
-
-    # Ensure the frame is set before updating
-    if not hasattr(update_key_buttons, "frame"):
-       # print("⚠️ update_key_buttons.frame not set. GUI can't be updated yet.")
-        return
-
-    frame = update_key_buttons.frame
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-    frame.columnconfigure(0, weight=1)
-    frame.rowconfigure(0, weight=1)
-
-    canvas = tk.Canvas(frame)
-    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-    canvas.grid(row=0, column=0, sticky="nsew")
-    scrollbar.grid(row=0, column=1, sticky="ns")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    scrollable_frame = ttk.Frame(canvas)
-    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-    canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas_window, width=e.width))
-
-    def _on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    scrollable_frame.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
-    scrollable_frame.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
-
-    scrollable_frame.columnconfigure(0, weight=1)
-
-    for idx, (key, action) in enumerate(key_to_touch.items()):
-        row_frame = ttk.Frame(scrollable_frame)
-        row_frame.grid(row=idx, column=0, sticky="ew", padx=5, pady=5)
-        row_frame.columnconfigure(0, weight=3)
-        row_frame.columnconfigure(1, weight=1)
-        row_frame.columnconfigure(2, weight=1)
-        row_frame.columnconfigure(3, weight=1)
-
-        ttk.Label(row_frame, text=f"{key.upper()}: {action}", wraplength=600, anchor="w", justify="left")\
-            .grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        ttk.Button(row_frame, text="Set", command=lambda k=key: set_coordinates(k))\
-            .grid(row=0, column=1, padx=2, sticky="ew")
-        ttk.Button(row_frame, text="Edit", command=lambda k=key: edit_key_action(k))\
-            .grid(row=0, column=2, padx=2, sticky="ew")
-        ttk.Button(row_frame, text="Remove", command=lambda k=key: remove_key(k))\
-            .grid(row=0, column=3, padx=2, sticky="ew")
-
-def remove_key(key):
-    if key in key_to_touch:
-        del key_to_touch[key]
-      #  print(f"❌ Removed key: {key}")
-        # Check if the frame is set before updating the buttons
-        #if hasattr(update_key_buttons, "frame"):
-          #  update_key_buttons()
-       # else:
-          # print("⚠️ Can't update buttons, frame not set.")
-    else:
-        messagebox.showerror(f"⚠️ Key '{key}' not found.")
-
-    # Ensure the frame is set before using it
-    if not hasattr(update_key_buttons, "frame"):
-        #print("⚠️ update_key_buttons.frame not set. GUI can't be updated yet.")
-        return
-
-    frame = update_key_buttons.frame
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-    frame.columnconfigure(0, weight=1)
-    frame.rowconfigure(0, weight=1)
-
-    canvas = tk.Canvas(frame)
-    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-    canvas.grid(row=0, column=0, sticky="nsew")
-    scrollbar.grid(row=0, column=1, sticky="ns")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    scrollable_frame = ttk.Frame(canvas)
-    window_id = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-
-    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-    canvas.bind("<Configure>", lambda e: canvas.itemconfig(window_id, width=e.width))
-
-    def _on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
-    canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
-
-    for idx, (key, action) in enumerate(key_to_touch.items()):
-        row_frame = ttk.Frame(scrollable_frame)
-        row_frame.grid(row=idx, column=0, sticky="ew", padx=5, pady=5)
-        row_frame.columnconfigure(0, weight=3)
-        row_frame.columnconfigure(1, weight=1)
-        row_frame.columnconfigure(2, weight=1)
-        row_frame.columnconfigure(3, weight=1)
-
-        ttk.Label(row_frame, text=f"{key.upper()}: {action}", wraplength=600, anchor="w", justify="left")\
-            .grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-
-        # Buttons for Set, Edit, Remove
-        ttk.Button(row_frame, text="Set", width=10, command=lambda k=key: set_coordinates(k))\
-            .grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        ttk.Button(row_frame, text="Edit", width=10, command=lambda k=key: edit_key_action(k))\
-            .grid(row=0, column=2, padx=2, pady=2, sticky="ew")
-        ttk.Button(row_frame, text="Remove", width=10, command=lambda k=key: remove_key(k))\
-            .grid(row=0, column=3, padx=2, pady=2, sticky="ew")
+        print(f"❌ Removed key: {key}")
+        if hasattr(update_key_buttons, "frame"):
+            update_key_buttons()
+        else:
+            print("⚠️ update_key_buttons.frame not set. GUI can't be updated yet.")
 
 def set_coordinates(key):
     global current_key
@@ -196,15 +21,14 @@ def set_coordinates(key):
     if isinstance(action, dict):
         messagebox.showwarning("Edit Required", "⚠️ Only 'Single Tap' actions can use Set.\nUse Edit instead.")
         return
-
     current_key = key
-   # print(f"🖱️ Click on screen to set coordinates for key: {key.upper()}")
+    print(f"🖱️ Click on screen to set coordinates for key: {key.upper()}")
 
     def on_click(x, y, button, pressed):
         global current_key
         if pressed and current_key:
             key_to_touch[current_key] = (x, y)
-           # print(f"✅ Set coordinates for {current_key}: ({x}, {y})")
+            print(f"✅ Set coordinates for {current_key}: ({x}, {y})")
             current_key = None
             if hasattr(update_key_buttons, "frame"):
                 update_key_buttons()
@@ -215,17 +39,17 @@ def set_coordinates(key):
 
 def edit_key_action(key):
     action = key_to_touch[key]
-    win = tk.Toplevel()
+    win = Toplevel()
     win.title(f"Edit Action for {key.upper()}")
 
     ttk.Label(win, text="Action Type:").grid(row=0, column=0, padx=5, pady=5)
     action_type_var = tk.StringVar(value="Single Tap")
     if isinstance(action, dict) and "type" in action:
-        action_type_var.set(action["type"].capitalize())
+        action_type_var.set(action["type"].replace("_", " ").title())
 
     action_type_menu = ttk.Combobox(
         win, textvariable=action_type_var,
-        values=["Single Tap", "Multiple Taps", "Scroll", "Long Press", "Swipe"],
+        values=["Single Tap", "Multiple Taps", "Scroll", "Long Press", "Swipe", "Continuous press"],
         state="readonly"
     )
     action_type_menu.grid(row=0, column=1, padx=5, pady=5)
@@ -245,32 +69,29 @@ def edit_key_action(key):
     duration_entry = ttk.Entry(win)
 
     def toggle_fields(*args):
-        t = action_type_var.get().lower()
+        t = action_type_var.get().lower().replace(" ", "_")
+        for widget in [end_label, end_entry, capture_end_btn, duration_label, duration_entry]:
+            widget.grid_remove()
+
         if t in ["scroll", "swipe"]:
             end_label.grid(row=2, column=0, padx=5, pady=5)
             end_entry.grid(row=2, column=1, padx=5, pady=5)
             capture_end_btn.grid(row=2, column=2, padx=5, pady=5)
             duration_label.grid(row=3, column=0, padx=5, pady=5)
             duration_entry.grid(row=3, column=1, padx=5, pady=5)
-        elif t in ["long press", "multiple taps"]:
-            end_label.grid_remove()
-            end_entry.grid_remove()
-            capture_end_btn.grid_remove()
+        elif t in ["long_press", "multiple_taps"]:
             duration_label.grid(row=3, column=0, padx=5, pady=5)
             duration_entry.grid(row=3, column=1, padx=5, pady=5)
-        else:
-            end_label.grid_remove()
-            end_entry.grid_remove()
-            capture_end_btn.grid_remove()
-            duration_label.grid_remove()
-            duration_entry.grid_remove()
+        elif t == "continuous_click":
+            # No extra fields needed
+            pass
 
     action_type_var.trace_add("write", toggle_fields)
 
-    # Pre-fill fields
+    # Pre-fill values safely
     if isinstance(action, dict):
         t = action.get("type", "single_tap").lower()
-        if t in ["swipe", "scroll"]:
+        if t in ["scroll", "swipe"]:
             start_entry.insert(0, f"{action.get('start_x', 0)}, {action.get('start_y', 0)}")
             end_entry.insert(0, f"{action.get('end_x', 0)}, {action.get('end_y', 0)}")
             duration_entry.insert(0, str(action.get("duration", 300)))
@@ -280,6 +101,11 @@ def edit_key_action(key):
         elif t == "multiple_taps":
             start_entry.insert(0, f"{action.get('x', 0)}, {action.get('y', 0)}")
             duration_entry.insert(0, str(action.get("count", 2)))
+        elif t == "continuous_click":
+            x = action.get("x", 0)
+            y = action.get("y", 0)
+            if isinstance(x, int) and isinstance(y, int):
+                start_entry.insert(0, f"{x}, {y}")
     elif isinstance(action, tuple):
         start_entry.insert(0, f"{action[0]}, {action[1]}")
 
@@ -289,49 +115,85 @@ def edit_key_action(key):
                 entry.after(0, lambda: entry.delete(0, tk.END))
                 entry.after(0, lambda: entry.insert(0, f"{x}, {y}"))
                 listener.stop()
-
         listener = mouse.Listener(on_click=on_click)
         listener.start()
 
     def save_action():
         try:
-            t = action_type_var.get().lower()
+            t = action_type_var.get().lower().replace(" ", "_")
+            coords = start_entry.get().split(",")
+            if len(coords) != 2:
+                raise ValueError("Invalid coordinates format. Use 'x, y'")
+            x, y = map(int, coords)
+
             if t in ["swipe", "scroll"]:
-                sx, sy = map(int, start_entry.get().split(","))
                 ex, ey = map(int, end_entry.get().split(","))
                 duration = int(duration_entry.get())
                 key_to_touch[key] = {
                     "type": t,
-                    "start_x": sx, "start_y": sy,
+                    "start_x": x, "start_y": y,
                     "end_x": ex, "end_y": ey,
                     "duration": duration
                 }
-            elif t == "long press":
-                x, y = map(int, start_entry.get().split(","))
+            elif t == "long_press":
                 duration = int(duration_entry.get())
-                key_to_touch[key] = {
-                    "type": "long_press",
-                    "x": x, "y": y,
-                    "duration": duration
-                }
-            elif t == "multiple taps":
-                x, y = map(int, start_entry.get().split(","))
+                key_to_touch[key] = {"type": t, "x": x, "y": y, "duration": duration}
+            elif t == "multiple_taps":
                 count = int(duration_entry.get())
-                key_to_touch[key] = {
-                    "type": "multiple_taps",
-                    "x": x, "y": y,
-                    "count": count
-                }
-            elif t == "single tap":
-                x, y = map(int, start_entry.get().split(","))
+                key_to_touch[key] = {"type": t, "x": x, "y": y, "count": count}
+            elif t == "continuous_press":
+                key_to_touch[key] = {"type": t, "x": x, "y": y}
+            elif t == "single_tap":
                 key_to_touch[key] = (x, y)
-
-            #print(f"✅ Updated action for {key}: {key_to_touch[key]}")
+            else:
+                raise ValueError("Unknown action type selected.")
+            print(f"✅ Updated action for {key}: {key_to_touch[key]}")
             update_key_buttons()
             win.destroy()
         except Exception as e:
             messagebox.showerror("Error", f"Invalid input: {e}")
 
-    ttk.Button(win, text="Save", command=save_action).grid(row=4, column=0, columnspan=3, pady=10)
+    ttk.Button(win, text="Save", command=save_action).grid(row=5, column=0, columnspan=3, pady=10)
+    toggle_fields()
 
-    toggle_fields()  # Show relevant fields
+
+def update_key_buttons():
+    if not hasattr(update_key_buttons, "frame"):
+        print("⚠️ update_key_buttons.frame not set. GUI can't be updated yet.")
+        return
+
+    frame = update_key_buttons.frame
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    frame.columnconfigure(0, weight=1)
+    frame.rowconfigure(0, weight=1)
+
+    canvas = tk.Canvas(frame)
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.grid(row=0, column=0, sticky="nsew")
+    scrollbar.grid(row=0, column=1, sticky="ns")
+
+    scrollable_frame = ttk.Frame(canvas)
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+    def _on_mousewheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+    canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
+
+    for idx, (key, action) in enumerate(key_to_touch.items()):
+        row_frame = ttk.Frame(scrollable_frame)
+        row_frame.grid(row=idx, column=0, sticky="ew", padx=5, pady=4)
+        row_frame.columnconfigure(0, weight=3)
+        row_frame.columnconfigure(1, weight=1)
+        row_frame.columnconfigure(2, weight=1)
+        row_frame.columnconfigure(3, weight=1)
+
+        ttk.Label(row_frame, text=f"{key.upper()}: {action}", wraplength=600, anchor="w", justify="left")\
+            .grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+        ttk.Button(row_frame, text="Set", command=lambda k=key: set_coordinates(k)).grid(row=0, column=1, padx=2, sticky="ew")
+        ttk.Button(row_frame, text="Edit", command=lambda k=key: edit_key_action(k)).grid(row=0, column=2, padx=2, sticky="ew")
+        ttk.Button(row_frame, text="Remove", command=lambda k=key: remove_key(k)).grid(row=0, column=3, padx=2, sticky="ew")
