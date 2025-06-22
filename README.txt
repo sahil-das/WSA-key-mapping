@@ -1,0 +1,1 @@
+WSA Touch Mapper - Project rebuild required after environment reset.

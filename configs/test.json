@@ -1,0 +1,34 @@
+{
+  "a": [
+    1495,
+    508
+  ],
+  "s": {
+    "type": "multiple_taps",
+    "x": 1058,
+    "y": 495,
+    "count": 20
+  },
+  "d": {
+    "type": "scroll",
+    "start_x": 1589,
+    "start_y": 697,
+    "end_x": 1638,
+    "end_y": 213,
+    "duration": 300
+  },
+  "f": {
+    "type": "long_press",
+    "x": 1628,
+    "y": 828,
+    "duration": 1000
+  },
+  "g": {
+    "type": "swipe",
+    "start_x": 1610,
+    "start_y": 263,
+    "end_x": 1630,
+    "end_y": 668,
+    "duration": 300
+  }
+}

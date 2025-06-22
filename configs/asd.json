@@ -1,0 +1,42 @@
+{
+  "a": [
+    1320,
+    836
+  ],
+  "s": {
+    "type": "scroll",
+    "start_x": 1568,
+    "start_y": 583,
+    "end_x": 1551,
+    "end_y": 400,
+    "duration": 300
+  },
+  "d": {
+    "type": "swipe",
+    "start_x": 1576,
+    "start_y": 412,
+    "end_x": 1575,
+    "end_y": 576,
+    "duration": 300
+  },
+  "right": {
+    "type": "swipe",
+    "start_x": 1512,
+    "start_y": 345,
+    "end_x": 1517,
+    "end_y": 539,
+    "duration": 300
+  },
+  "down": {
+    "type": "multiple_taps",
+    "x": 1086,
+    "y": 467,
+    "count": 30
+  },
+  "right_click": {
+    "type": "long_press",
+    "x": 1432,
+    "y": 851,
+    "duration": 10000
+  }
+}

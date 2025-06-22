@@ -1,0 +1,22 @@
+{
+  "a": {
+    "type": "long_press",
+    "x": 1368,
+    "y": 827,
+    "duration": 3000
+  },
+  "s": {
+    "type": "swipe",
+    "start_x": 1386,
+    "start_y": 658,
+    "end_x": 1359,
+    "end_y": 254,
+    "duration": 300
+  },
+  "f": {
+    "type": "long_press",
+    "x": 0,
+    "y": 0,
+    "duration": 1000
+  }
+}
